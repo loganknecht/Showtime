@@ -5,7 +5,7 @@ var currentFrame : int;
 var startFrame : int;
 var endFrame : int;
 
-var lastUpdateTime;
+var lastUpdateTime : float = 0;
 var framesPerSecond : float;
 
 var spriteTexture : Material;
@@ -15,13 +15,6 @@ var isAnimating : boolean = true;
 var flipImage : boolean = false;
 
 var renderPlane : GameObject;
-//var playerCube : GameObject;
-
-//These handle the scaling for the cube behind the plane that's meant to handle physics
-//they are based off of the plane so you don't have to worry about it not being proportional to it
-//var cubeScaleX;
-//var cubeScaleY;
-//var cubeScaleZ;
 
 function Start() {
 	configureSprite();
@@ -29,7 +22,6 @@ function Start() {
 }
 
 function Update () {
-	//alignShapesToObject();
 	//updates animation
 	if(isAnimating) {
 		UpdateAnimation();
@@ -76,37 +68,17 @@ function UpdateAnimation() {
 
 //configures the plane texture
 function configureSprite() {
-	lastUpdateTime = 0;
-	isAnimating = true;
-
 	configureShapes();
 }
 
 //configures the basic shapes being used
 function configureShapes() {
-	//cubeScaleX = 10;
-	//cubeScaleY = 10;
-	//cubeScaleZ = 1;
-	
-	//playerCube = GameObject.CreatePrimitive(PrimitiveType.Cube);
-	//playerCube.name = "SpriteCube";
-	//playerCube.renderer.enabled = false;
-	//playerCube.transform.Translate(0, 0, 6);
-	//TO DO remove the vector3 hard coded values and replaces with Scale by variables later if needed
-	//playerCube.transform.localScale = (new Vector3(transform.localScale.x * cubeScaleX, transform.localScale.y * cubeScaleY,transform.localScale.z * cubeScaleZ));
-
-	//renderPlane = GameObject.CreatePrimitive(PrimitiveType.Plane);
-	//renderPlane.name = "SpritePlane";
-	//renderPlane.transform.Rotate(90, 0, 0);
-	//renderPlane.transform.localScale = transform.localScale;
 	renderPlane.renderer.material = spriteTexture;
-	//alignShapesToObject();
 }
 
 //offsets the cube to the plane being used so all I have to do is call this and each
 //on is reset around the actual game object being tethered to
 function alignShapesToObject() {
-	//playerCube.transform.position = transform.position + new Vector3(0, 0, 1);
 	renderPlane.transform.position = transform.position;
 }
 
@@ -118,16 +90,14 @@ function setAnimationFrames(cFrame, sFrame, eFrame) {
 }
 
 //pass in true or false in order to set this
-function setFlipImage(currentState) {
-	flipImage = currentState;
-		
+function setFlipImage(bool) {
+	flipImage = bool;
 	if(flipImage) {
-		//renderPlane.transform.rotation = Quaternion.identity;
-		//renderPlane.transform.rotation = Quaternion.AngleAxis(180, Vector3.right);
-		renderPlane.transform.eulerAngles.y = 0;
+		//renderPlane.transform.eulerAngles.y = 0;
+		//renderPlane.renderer.transform.localScale.x *= -1;
 	}
 	else {
-		//renderPlane.transform.rotation = Quaternion.identity;
-		renderPlane.transform.eulerAngles.y = 180;
+		//renderPlane.transform.eulerAngles.y = 180;
+		//renderPlane.renderer.transform.localScale.x *= -1;
 	}
 }
