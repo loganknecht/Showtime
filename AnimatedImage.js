@@ -17,6 +17,10 @@ var flipImage : boolean = false;
 var renderPlane : GameObject;
 
 function Start() {
+	//this is only here so that I can fix issues with the flipping on initialization because of camera annoyances
+	renderPlane.renderer.transform.localScale.x *= -1;
+	//------
+	
 	configureSprite();
 	UpdateAnimation();
 }
@@ -38,19 +42,6 @@ function UpdateAnimation() {
 	    	currentFrame = startFrame;
     	}
 	}    
-    
-    //checks if sprite should be flipped
-    if(flipImage) {
-    	if(renderPlane.transform.eulerAngles.y != 0) {
-    		renderPlane.transform.eulerAngles.y = 0;
-    	}
-    }
-    else {
-    	if(renderPlane.transform.eulerAngles.y != 180) {
-    		renderPlane.transform.eulerAngles.y = 180;
-    	}
-    }
-    //---------
     
     var size = Vector2 (1.0 / columnSize, 1.0 / rowSize);
    
@@ -94,10 +85,14 @@ function setFlipImage(bool) {
 	flipImage = bool;
 	if(flipImage) {
 		//renderPlane.transform.eulerAngles.y = 0;
-		//renderPlane.renderer.transform.localScale.x *= -1;
+		if(renderPlane.transform.localScale.x < 0) {
+			renderPlane.renderer.transform.localScale.x *= -1;
+		}
 	}
 	else {
 		//renderPlane.transform.eulerAngles.y = 180;
-		//renderPlane.renderer.transform.localScale.x *= -1;
+		if(renderPlane.transform.localScale.x > 0) {
+			renderPlane.renderer.transform.localScale.x *= -1;
+		}
 	}
 }

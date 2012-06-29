@@ -18,13 +18,18 @@ private var movingLeft = false;
 private var movingRight = false;
 
 var jumping;
-var doubleJumpUsed;;
+var doubleJumpUsed;
+
+var fallSpeed : int;
 //------------------------------------------------------------------
 function Start () {
 }
 
-function Update () {
+function Update() {
 	playerEventHandling();
+}
+
+function FixedUpdate () {
 	runPlayerLogic();
 }
 
@@ -32,7 +37,9 @@ function playerEventHandling() {
 	//------left-------
 	//if left key pressed and right key not held
 	if(Input.GetKeyDown(leftKey) && !Input.GetKey(rightKey)) {
-		playerAnimatedImage.setFlipImage(true);
+		if(!playerAnimatedImage.flipImage) {
+			playerAnimatedImage.setFlipImage(true);
+		}
 		movingLeft = true;
 	}
 	//if left key pressed and right key held
@@ -41,6 +48,9 @@ function playerEventHandling() {
 	}
 	//if left key held and right key released
 	if(Input.GetKey(leftKey) && Input.GetKeyUp(rightKey)) {
+		if(!playerAnimatedImage.flipImage) {
+			playerAnimatedImage.setFlipImage(true);
+		}
 		movingLeft = true;
 		movingRight = false;
 	}
@@ -52,6 +62,9 @@ function playerEventHandling() {
 	//------right-------
 	//right key pressed, left key not held
 	if(Input.GetKeyDown(rightKey) && !Input.GetKey(leftKey)) {
+		if(playerAnimatedImage.flipImage) {
+			playerAnimatedImage.setFlipImage(false);
+		}
 		movingRight = true;
 	}
 	//right key press, left key held
@@ -60,7 +73,9 @@ function playerEventHandling() {
 	}
 	//right key held, left key released
 	if(Input.GetKey(rightKey) && Input.GetKeyUp(leftKey)) {	
-		
+		if(playerAnimatedImage.flipImage) {
+			playerAnimatedImage.setFlipImage(false);
+		}
 		movingRight = true;
 		movingLeft = false;
 	}
@@ -72,13 +87,23 @@ function playerEventHandling() {
 }
 
 function runPlayerLogic() {
-	//couldn't find exclusive or for logical checking
+	var controller : CharacterController = GetComponent(CharacterController);
+	var moveDirection = Vector3(0, 0, 0);
+	
 	if((movingLeft || movingRight) && !(movingLeft && movingRight)) {
 		if(movingLeft) {
-			transform.Translate(new Vector3(moveSpeed,0, 0) * Time.deltaTime);
+			//transform.Translate(new Vector3(-moveSpeed,0, 0) * Time.deltaTime);
+			moveDirection.x -= moveSpeed;
 		}
 		if(movingRight) {
-			transform.Translate(new Vector3(-moveSpeed, 0, 0) * Time.deltaTime);	
+			//transform.Translate(new Vector3(moveSpeed, 0, 0) * Time.deltaTime);	
+			moveDirection.x += moveSpeed;
 		}
 	}
+	
+	// Apply gravity
+	moveDirection.y -= fallSpeed;
+
+	// Move the controller
+	controller.Move(moveDirection * Time.deltaTime);
 }
