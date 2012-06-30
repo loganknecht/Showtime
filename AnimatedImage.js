@@ -84,13 +84,11 @@ function setAnimationFrames(cFrame, sFrame, eFrame) {
 function setFlipImage(bool) {
 	flipImage = bool;
 	if(flipImage) {
-		//renderPlane.transform.eulerAngles.y = 0;
 		if(renderPlane.transform.localScale.x < 0) {
 			renderPlane.renderer.transform.localScale.x *= -1;
 		}
 	}
 	else {
-		//renderPlane.transform.eulerAngles.y = 180;
 		if(renderPlane.transform.localScale.x > 0) {
 			renderPlane.renderer.transform.localScale.x *= -1;
 		}
