@@ -42,8 +42,8 @@ doubleJumpTimer - this tracks the time the player is up for their double jump
 
 fallSpeed - this is how fast the player is moved down by the "gravity"
 */
-var moveSpeed : int = 50;
-var jumpSpeed : int = 50;
+var moveSpeed : float = 2;
+var jumpSpeed : float = 3;
 
 var upKey : String = "w";
 var downKey : String = "s";
@@ -65,12 +65,12 @@ private var movingRight = false;
 var isJumping : boolean = false;
 var jumpUsed : boolean = false;
 var doubleJumpUsed : boolean = false;
-var jumpTimerMax : int = 20;
+var jumpTimerMax : int = 15;
 var jumpTimer : int = 0;
 var doubleJumpTimer : int = 0;
 
 //environment bs goes here
-var fallSpeed : int;
+var fallSpeed : float = 2;
 //------------------------------------------------------------------
 
 function Start () {
@@ -136,7 +136,7 @@ function fixCollisions(movementVector : Vector3) : Vector3 {
 	var bottomRightPosition : Vector3;
 	// this helps deterine how far to offset the interaction for collisions so that an object can be as flush as possible
 	// if the value being compared to this is greater than it then the move value is allowed, otherwise it's zeroed out
-	var moveThreshold : float = 2;
+	var moveThreshold : float = 16;
 	
 	//-------------------------------------------------------
 	// ALL COLLISION INTERACTION STARTS BELOW THIS LINE
@@ -170,7 +170,7 @@ function fixCollisions(movementVector : Vector3) : Vector3 {
 	if(movementVector.x <= 0) {
 		//top left
 		topLeftPosition = new Vector3(transform.position.x, transform.position.y + collider.bounds.size.y/2, transform.position.z);
-		bottomLeftPosition = new Vector3(transform.position.x, transform.position.y - collider.bounds.size.y/2, transform.position.z);
+		bottomLeftPosition = new Vector3(transform.position.x, transform.position.y - collider.bounds.size.y/2.5, transform.position.z);
 		if (Physics.Raycast(topLeftPosition, -Vector3.right, topLeftRay)) {
 			if(topLeftRay.distance <= -(movementVector.x - collider.bounds.size.x/2)) {
 				if(-movementVector.x > moveThreshold) {
@@ -184,7 +184,7 @@ function fixCollisions(movementVector : Vector3) : Vector3 {
 		}
 		//left
 		//Debug.DrawRay(transform.position, -Vector3.right*movementVector.x, Color.white);
-		if (Physics.Raycast(transform.position, -Vector3.right, leftRay)) {
+		else if (Physics.Raycast(transform.position, -Vector3.right, leftRay)) {
 			if(leftRay.distance <= -(movementVector.x - collider.bounds.size.x/2)) {
 				if(-movementVector.x > moveThreshold) {
 					movementVector.x = movementVector.x/2;
@@ -194,23 +194,23 @@ function fixCollisions(movementVector : Vector3) : Vector3 {
 				}
 			}
 		}
-//		//bottom left
-//		if (Physics.Raycast(bottomLeftPosition, -Vector3.right, bottomLeftRay)) {
-//			if(bottomLeftRay.distance <= -(movementVector.x - collider.bounds.size.x/2)) {
-//				if(-movementVector.x > moveThreshold) {
-//					movementVector.x = movementVector.x/2;
-//				}
-//				else {
-//					movementVector.x = -bottomLeftRay.distance  + collider.bounds.size.x/2;
-//				}
-//			}
-//		}
+		//bottom left
+		else if (Physics.Raycast(bottomLeftPosition, -Vector3.right, bottomLeftRay)) {
+			if(bottomLeftRay.distance <= -(movementVector.x - collider.bounds.size.x/2)) {
+				if(-movementVector.x > moveThreshold) {
+					movementVector.x = movementVector.x/2;
+				}
+				else {
+					movementVector.x = -bottomLeftRay.distance  + collider.bounds.size.x/2;
+				}
+			}
+		}
 	}
 	//moving right
 	else {
 		//top right
 		topRightPosition = new Vector3(transform.position.x, transform.position.y + collider.bounds.size.y/2, transform.position.z);
-		bottomRightPosition = new Vector3(transform.position.x, transform.position.y - collider.bounds.size.y/2, transform.position.z);
+		bottomRightPosition = new Vector3(transform.position.x, transform.position.y - collider.bounds.size.y/2.5, transform.position.z);
 		if (Physics.Raycast(topRightPosition, Vector3.right, topRightRay)) {
 			if(topRightRay.distance <= (movementVector.x + collider.bounds.size.x/2)) {
 				if(movementVector.x > moveThreshold) {
@@ -223,7 +223,7 @@ function fixCollisions(movementVector : Vector3) : Vector3 {
 		}
 		//right
 		//Debug.DrawRay(transform.position, Vector3.right*movementVector.x, Color.white);
-		if (Physics.Raycast(transform.position, Vector3.right, rightRay)) {
+		else if (Physics.Raycast(transform.position, Vector3.right, rightRay)) {
 			if(rightRay.distance <= (movementVector.x + collider.bounds.size.x/2)) {
 				//movementVector.x = movementVector.x/2;
 				if(movementVector.x > moveThreshold) {
@@ -234,17 +234,17 @@ function fixCollisions(movementVector : Vector3) : Vector3 {
 				}
 			}
 		}
-//		//bottom right
-//		if (Physics.Raycast(bottomRightPosition, Vector3.right, bottomRightRay)) {
-//			if(bottomRightRay.distance <= (movementVector.x + collider.bounds.size.x/2)) {
-//				if(movementVector.x > moveThreshold) {
-//					movementVector.x = movementVector.x/2;
-//				}
-//				else {
-//					movementVector.x = bottomRightRay.distance-collider.bounds.size.x/2;
-//				}
-//			}
-//		}
+		//bottom right
+		else if (Physics.Raycast(bottomRightPosition, Vector3.right, bottomRightRay)) {
+			if(bottomRightRay.distance <= (movementVector.x + collider.bounds.size.x/2)) {
+				if(movementVector.x > moveThreshold) {
+					movementVector.x = movementVector.x/2;
+				}
+				else {
+					movementVector.x = bottomRightRay.distance-collider.bounds.size.x/2;
+				}
+			}
+		}
 	}
 	//moving up
 	if(movementVector.y >= 0) {
@@ -257,7 +257,7 @@ function fixCollisions(movementVector : Vector3) : Vector3 {
 					movementVector.y = movementVector.y/2;
 				}
 				else {
-					movementVector.y = topLeftRay.distance-collider.bounds.size.y/2;
+					movementVector.y = topLeftRay.distance - collider.bounds.size.y/2;
 				}
 				if(isJumping) {
 					isJumping = false;
@@ -273,7 +273,7 @@ function fixCollisions(movementVector : Vector3) : Vector3 {
 					movementVector.y = movementVector.y/2;
 				}
 				else {
-					movementVector.y = topRay.distance-collider.bounds.size.y/2;
+					movementVector.y = topRay.distance - collider.bounds.size.y/2;
 				}
 				if(isJumping) {
 					isJumping = false;
@@ -288,7 +288,7 @@ function fixCollisions(movementVector : Vector3) : Vector3 {
 					movementVector.y = movementVector.y/2;
 				}
 				else {
-					movementVector.y = topRightRay.distance-collider.bounds.size.y/2;
+					movementVector.y = topRightRay.distance - collider.bounds.size.y/2;
 				}
 				if(isJumping) {
 					isJumping = false;
@@ -304,23 +304,27 @@ function fixCollisions(movementVector : Vector3) : Vector3 {
 		//left-down
 		if (Physics.Raycast(bottomLeftPosition, -Vector3.up, bottomLeftRay)) {
 			if(bottomLeftRay.distance <= -(movementVector.y - collider.bounds.size.y/2)) {
-				if(bottomLeftRay.transform.rotation.eulerAngles.z != 0) {
-					playerAnimatedImageGameObject.transform.position.y = transform.position.y-1.2;
-					playerAnimatedImageGameObject.transform.rotation = Quaternion.identity;
-					playerAnimatedImageGameObject.transform.Rotate(new Vector3(90, 0, 0), Space.World);
-					playerAnimatedImageGameObject.transform.Rotate(new Vector3(0, bottomLeftRay.transform.rotation.eulerAngles.z, 0), Space.Self);
+				if(bottomLeftRay.transform.rotation.eulerAngles.z == 0) {
+					playerAnimatedImageGameObject.transform.position.y = transform.position.y + 1;
+				}
+				else if(movingRight && bottomLeftRay.transform.rotation.eulerAngles.z >= 180 && bottomLeftRay.transform.rotation.eulerAngles.z < 360) {
+					playerAnimatedImageGameObject.transform.position.y = transform.position.y - 2;
+				}
+				else if(movingLeft && bottomLeftRay.transform.rotation.eulerAngles.z > 0  && bottomLeftRay.transform.rotation.eulerAngles.z < 180) {
+				 	//playerAnimatedImageGameObject.transform.position.y = transform.position.y;
 				}
 				else {
 					playerAnimatedImageGameObject.transform.position.y = transform.position.y;
-					playerAnimatedImageGameObject.transform.rotation = Quaternion.identity;
-					playerAnimatedImageGameObject.transform.Rotate(new Vector3(90, 0, 0), Space.World);
-					playerAnimatedImageGameObject.transform.Rotate(new Vector3(0, bottomLeftRay.transform.rotation.eulerAngles.z, 0), Space.Self);
 				}
+				
+				playerAnimatedImageGameObject.transform.rotation = Quaternion.identity;
+				playerAnimatedImageGameObject.transform.Rotate(new Vector3(90, 0, 0), Space.World);
+				playerAnimatedImageGameObject.transform.Rotate(new Vector3(0, bottomLeftRay.transform.rotation.eulerAngles.z, 0), Space.Self);
 				if(-movementVector.y > moveThreshold) {
 					movementVector.y = movementVector.y/2;
 				}
 				else {
-					movementVector.y = -bottomLeftRay.distance + collider.bounds.size.y/2;
+					movementVector.y = -(bottomLeftRay.distance - collider.bounds.size.y/2);
 				}
 				if(jumpUsed || isJumping) {
 					resetJump();
@@ -337,24 +341,27 @@ function fixCollisions(movementVector : Vector3) : Vector3 {
 		//Debug.DrawRay(transform.position, -Vector3.up, Color.white);
 		if (Physics.Raycast(transform.position, -Vector3.up, bottomRay)) {
 			if(bottomRay.distance <= -(movementVector.y - collider.bounds.size.y/2)) {
-				if(bottomRay.transform.rotation.eulerAngles.z != 0) {
-					playerAnimatedImageGameObject.transform.position.y = transform.position.y-1.2;
-					playerAnimatedImageGameObject.transform.rotation = Quaternion.identity;
-					playerAnimatedImageGameObject.transform.Rotate(new Vector3(90, 0, 0), Space.World);
-					playerAnimatedImageGameObject.transform.Rotate(new Vector3(0, bottomRay.transform.rotation.eulerAngles.z, 0), Space.Self);
+				if(bottomRay.transform.rotation.eulerAngles.z == 0) {
+					playerAnimatedImageGameObject.transform.position.y = transform.position.y + 1;
+				}
+				else if(movingRight && bottomRay.transform.rotation.eulerAngles.z >= 180 && bottomRay.transform.rotation.eulerAngles.z < 360) {
+					playerAnimatedImageGameObject.transform.position.y = transform.position.y - 2;
+				}
+				else if(movingLeft && bottomRay.transform.rotation.eulerAngles.z > 0  && bottomRay.transform.rotation.eulerAngles.z < 180) {
+				 	//playerAnimatedImageGameObject.transform.position.y = transform.position.y;
 				}
 				else {
 					playerAnimatedImageGameObject.transform.position.y = transform.position.y;
-					playerAnimatedImageGameObject.transform.rotation = Quaternion.identity;
-					playerAnimatedImageGameObject.transform.Rotate(new Vector3(90, 0, 0), Space.World);
-					playerAnimatedImageGameObject.transform.Rotate(new Vector3(0, bottomLeftRay.transform.rotation.eulerAngles.z, 0), Space.Self);
-				}
+				} 
+				playerAnimatedImageGameObject.transform.rotation = Quaternion.identity;
+				playerAnimatedImageGameObject.transform.Rotate(new Vector3(90, 0, 0), Space.World);
+				playerAnimatedImageGameObject.transform.Rotate(new Vector3(0, bottomRay.transform.rotation.eulerAngles.z, 0), Space.Self);
 				
 				if(-movementVector.y > moveThreshold) {
 					movementVector.y = movementVector.y/2;
 				}
 				else {
-					movementVector.y = -bottomRay.distance + collider.bounds.size.y/2;
+					movementVector.y = -(bottomRay.distance - collider.bounds.size.y/2);
 				}
 				if(jumpUsed || isJumping) {
 					resetJump();
@@ -371,25 +378,28 @@ function fixCollisions(movementVector : Vector3) : Vector3 {
 		//Debug.DrawRay(bottomRightPosition, -Vector3.up*5, Color.white);
 		if (Physics.Raycast(bottomRightPosition, -Vector3.up, bottomRightRay)) {
 			if(bottomRightRay.distance <= -(movementVector.y - collider.bounds.size.y/2)) {			
-				if(bottomRightRay.transform.rotation.eulerAngles.z != 0) {
-					playerAnimatedImageGameObject.transform.position.y = transform.position.y-1.2;
-					playerAnimatedImageGameObject.transform.rotation = Quaternion.identity;
-					playerAnimatedImageGameObject.transform.Rotate(new Vector3(90, 0, 0), Space.World);
-					playerAnimatedImageGameObject.transform.Rotate(new Vector3(0, bottomRightRay.transform.rotation.eulerAngles.z, 0), Space.Self);
+				if(bottomRightRay.transform.rotation.eulerAngles.z == 0) {
+					playerAnimatedImageGameObject.transform.position.y = transform.position.y + 1;
+				}
+				else if(movingRight && bottomRightRay.transform.rotation.eulerAngles.z >= 180 && bottomRightRay.transform.rotation.eulerAngles.z < 360) {
+					playerAnimatedImageGameObject.transform.position.y = transform.position.y - 2;
+				}
+				else if(movingLeft && bottomRightRay.transform.rotation.eulerAngles.z > 0  && bottomRightRay.transform.rotation.eulerAngles.z < 180) {
+				 	//playerAnimatedImageGameObject.transform.position.y = transform.position.y;
 				}
 				else {
 					playerAnimatedImageGameObject.transform.position.y = transform.position.y;
-					playerAnimatedImageGameObject.transform.rotation = Quaternion.identity;
-					playerAnimatedImageGameObject.transform.Rotate(new Vector3(90, 0, 0), Space.World);
-					playerAnimatedImageGameObject.transform.Rotate(new Vector3(0, bottomLeftRay.transform.rotation.eulerAngles.z, 0), Space.Self);
-				}
+				} 
+				
+				playerAnimatedImageGameObject.transform.rotation = Quaternion.identity;
+				playerAnimatedImageGameObject.transform.Rotate(new Vector3(90, 0, 0), Space.World);
+				playerAnimatedImageGameObject.transform.Rotate(new Vector3(0, bottomRightRay.transform.rotation.eulerAngles.z, 0), Space.Self);
 				
 				if(-movementVector.y > moveThreshold) {
-					Debug.Log("Bottom Right Hit Detected");
 					movementVector.y = movementVector.y/2;
 				}
 				else {
-					movementVector.y = -bottomRightRay.distance + collider.bounds.size.y/2;
+					movementVector.y = -(bottomRightRay.distance - collider.bounds.size.y/2);
 				}
 				if(jumpUsed || isJumping) {
 					resetJump();

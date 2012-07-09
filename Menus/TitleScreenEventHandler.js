@@ -5,8 +5,6 @@ var flashTimer : int = 0;
 var flashTimerMax : int = 10;
 var displayFlashingText : boolean = true;
 
-var gameTitleString : String = "";
-
 var gameTitle : GUIText;
 var flashingPressStartText : GUIText;
 
@@ -26,7 +24,7 @@ function processPlayerKeyInput() {
 				//Application.LoadLevel("Sandbox");
 			break;
 		}
-		Application.LoadLevel("Sandbox");
+		Application.LoadLevel("TestGameLevelOne");
 	}
 	if(Input.GetKeyDown("escape")) {
 		switch(titleScreenState) {
@@ -42,7 +40,7 @@ function processPlayerKeyInput() {
 function manageTitleScreenText() {
 	switch(titleScreenState) {
 		case(0):
-			gameTitle.text = gameTitleString;
+			//gameTitle.text = gameTitleString;
 			flashTimer++;
 			if(flashTimer > flashTimerMax) {
 				flashTimer = 0;
