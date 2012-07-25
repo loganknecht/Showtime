@@ -50,16 +50,20 @@ var downKey : String = "s";
 var leftKey : String = "a";
 var rightKey : String = "d";
 
+var attackKey : String = "g";
 var jumpKey : String = "space";
 
 var playerAnimatedImageGameObject : GameObject;
-private var playerAnimatedImage : AnimatedImage;
+var playerAnimatedImage : AnimatedImage;
 
 //------------------------------------------------------------------
 //move states handled here, maybe pointless but couldn't 
 //think of a better way to do this other than how I've been doing it
-private var movingLeft = false;
-private var movingRight = false;
+var pressingUp = false;
+var pressingDown = false;
+
+var movingLeft = false;
+var movingRight = false;
 
 //jumping bs goes here
 var isJumping : boolean = false;
@@ -71,13 +75,17 @@ var doubleJumpTimer : int = 0;
 
 //environment bs goes here
 var fallSpeed : float = 2;
+
+var movementModifier : Vector3 = Vector3.zero;
+var movementModifierDecrementSize : float = 0.5;
+
 //------------------------------------------------------------------
 
 function Start () {
 	/*
 	Declared the playerAnimatedImage that's grabbed from the game object pre-assigned
 	*/
-	playerAnimatedImage = playerAnimatedImageGameObject.GetComponent("AnimatedImage");
+	playerAnimatedImage = playerAnimatedImageGameObject.GetComponent(AnimatedImage);
 }
 
 function Update() {
@@ -100,12 +108,47 @@ function FixedUpdate () {
 	
 	Finally the output from the fix collisions is returned and then given to the local transform object in order 
 	to move
-	*/
-	var newMovementVector : Vector3 = Vector3.zero;
-	newMovementVector = runPlayerLogic();
+	*/	
 	
-	var finalMovementVector : Vector3 = fixCollisions(newMovementVector);
-	transform.Translate(finalMovementVector);
+	var newMovementVector : Vector3 = Vector3.zero;
+	//player movement and running junk goes here
+	newMovementVector = runPlayerLogic();
+	//external forces get added here
+	newMovementVector = addMovementModifier(newMovementVector);
+	//collision rectifying goes here
+	newMovementVector = fixCollisions(newMovementVector);
+	//after all this the player now moves to the correct location
+	transform.Translate(newMovementVector);
+	
+	transform.position.z = 0;
+}
+
+function addMovementModifier(newMovementVector : Vector3) : Vector3{
+	newMovementVector += movementModifier;
+	var moveThreshold : float = .5;
+	if(movementModifier.x <= moveThreshold && movementModifier.x >= -moveThreshold) {
+		movementModifier.x = 0;
+	}
+	else {
+		if(movementModifier.x >= moveThreshold) {
+			movementModifier.x -= movementModifierDecrementSize;
+		}
+		else if (movementModifier.x <= -moveThreshold) {
+			movementModifier.x += movementModifierDecrementSize;
+		}
+	}
+	if(movementModifier.y <= moveThreshold && movementModifier.y >= -moveThreshold) {
+		movementModifier.y = 0;
+	}
+	else {
+		if(movementModifier.y >= moveThreshold) {
+			movementModifier.y -= movementModifierDecrementSize;
+		}
+		else if (movementModifier.y <= -moveThreshold) {
+			movementModifier.y += movementModifierDecrementSize;
+		}
+	}
+	return newMovementVector;	
 }
 
 function fixCollisions(movementVector : Vector3) : Vector3 {
@@ -136,7 +179,7 @@ function fixCollisions(movementVector : Vector3) : Vector3 {
 	var bottomRightPosition : Vector3;
 	// this helps deterine how far to offset the interaction for collisions so that an object can be as flush as possible
 	// if the value being compared to this is greater than it then the move value is allowed, otherwise it's zeroed out
-	var moveThreshold : float = 16;
+	var moveThreshold : float = 8;
 	
 	//-------------------------------------------------------
 	// ALL COLLISION INTERACTION STARTS BELOW THIS LINE
@@ -166,42 +209,40 @@ function fixCollisions(movementVector : Vector3) : Vector3 {
 	But... at this point I just don't care. Call it a sextenary search or someting...
 	*/
 	
+	transform.rotation = Quaternion.identity;
 	//moving left
 	if(movementVector.x <= 0) {
 		//top left
 		topLeftPosition = new Vector3(transform.position.x, transform.position.y + collider.bounds.size.y/2, transform.position.z);
-		bottomLeftPosition = new Vector3(transform.position.x, transform.position.y - collider.bounds.size.y/2.5, transform.position.z);
+		bottomLeftPosition = new Vector3(transform.position.x, transform.position.y - collider.bounds.size.y/2, transform.position.z);
 		if (Physics.Raycast(topLeftPosition, -Vector3.right, topLeftRay)) {
-			if(topLeftRay.distance <= -(movementVector.x - collider.bounds.size.x/2)) {
-				if(-movementVector.x > moveThreshold) {
-					movementVector.x = movementVector.x/2;
+			if(topLeftRay.collider.gameObject.name.ToLower() == "whippart") {
+			}
+			else {
+				if(topLeftRay.distance <= -(movementVector.x - collider.bounds.size.x/2)) {
+					if(-movementVector.x > moveThreshold) {
+						movementVector.x = movementVector.x/2;
+					}
+					else {
+						movementVector.x = -topLeftRay.distance + collider.bounds.size.x/2;
+					}
+					
 				}
-				else {
-					movementVector.x = -topLeftRay.distance + collider.bounds.size.x/2;
-				}
-				
 			}
 		}
 		//left
 		//Debug.DrawRay(transform.position, -Vector3.right*movementVector.x, Color.white);
-		else if (Physics.Raycast(transform.position, -Vector3.right, leftRay)) {
-			if(leftRay.distance <= -(movementVector.x - collider.bounds.size.x/2)) {
-				if(-movementVector.x > moveThreshold) {
-					movementVector.x = movementVector.x/2;
-				}
-				else {
-					movementVector.x = -leftRay.distance + collider.bounds.size.x/2;
-				}
+		if (Physics.Raycast(transform.position, -Vector3.right, leftRay)) {
+			if(leftRay.collider.gameObject.name.ToLower() == "whippart") {
 			}
-		}
-		//bottom left
-		else if (Physics.Raycast(bottomLeftPosition, -Vector3.right, bottomLeftRay)) {
-			if(bottomLeftRay.distance <= -(movementVector.x - collider.bounds.size.x/2)) {
-				if(-movementVector.x > moveThreshold) {
-					movementVector.x = movementVector.x/2;
-				}
-				else {
-					movementVector.x = -bottomLeftRay.distance  + collider.bounds.size.x/2;
+			else {
+				if(leftRay.distance <= -(movementVector.x - collider.bounds.size.x/2)) {
+					if(-movementVector.x > moveThreshold) {
+						movementVector.x = movementVector.x/2;
+					}
+					else {
+						movementVector.x = -leftRay.distance + collider.bounds.size.x/2;
+					}
 				}
 			}
 		}
@@ -210,38 +251,35 @@ function fixCollisions(movementVector : Vector3) : Vector3 {
 	else {
 		//top right
 		topRightPosition = new Vector3(transform.position.x, transform.position.y + collider.bounds.size.y/2, transform.position.z);
-		bottomRightPosition = new Vector3(transform.position.x, transform.position.y - collider.bounds.size.y/2.5, transform.position.z);
+		bottomRightPosition = new Vector3(transform.position.x, transform.position.y - collider.bounds.size.y/2, transform.position.z);
 		if (Physics.Raycast(topRightPosition, Vector3.right, topRightRay)) {
-			if(topRightRay.distance <= (movementVector.x + collider.bounds.size.x/2)) {
-				if(movementVector.x > moveThreshold) {
-					movementVector.x = movementVector.x/2;
-				}
-				else {
-					movementVector.x = topRightRay.distance-collider.bounds.size.x/2;
+			if(topRightRay.collider.gameObject.name.ToLower() == "whippart") {
+			}
+			else {
+				if(topRightRay.distance <= (movementVector.x + collider.bounds.size.x/2)) {
+					if(movementVector.x > moveThreshold) {
+						movementVector.x = movementVector.x/2;
+					}
+					else {
+						movementVector.x = topRightRay.distance-collider.bounds.size.x/2;
+					}
 				}
 			}
 		}
 		//right
 		//Debug.DrawRay(transform.position, Vector3.right*movementVector.x, Color.white);
-		else if (Physics.Raycast(transform.position, Vector3.right, rightRay)) {
-			if(rightRay.distance <= (movementVector.x + collider.bounds.size.x/2)) {
-				//movementVector.x = movementVector.x/2;
-				if(movementVector.x > moveThreshold) {
-					movementVector.x = movementVector.x/2;
-				}
-				else {
-					movementVector.x = rightRay.distance-collider.bounds.size.x/2;
-				}
+		if (Physics.Raycast(transform.position, Vector3.right, rightRay)) {
+			if(rightRay.collider.gameObject.name.ToLower() == "whippart") {
 			}
-		}
-		//bottom right
-		else if (Physics.Raycast(bottomRightPosition, Vector3.right, bottomRightRay)) {
-			if(bottomRightRay.distance <= (movementVector.x + collider.bounds.size.x/2)) {
-				if(movementVector.x > moveThreshold) {
-					movementVector.x = movementVector.x/2;
-				}
-				else {
-					movementVector.x = bottomRightRay.distance-collider.bounds.size.x/2;
+			else {
+				if(rightRay.distance <= (movementVector.x + collider.bounds.size.x/2)) {
+					//movementVector.x = movementVector.x/2;
+					if(movementVector.x > moveThreshold) {
+						movementVector.x = movementVector.x/2;
+					}
+					else {
+						movementVector.x = rightRay.distance-collider.bounds.size.x/2;
+					}
 				}
 			}
 		}
@@ -252,124 +290,141 @@ function fixCollisions(movementVector : Vector3) : Vector3 {
 		topRightPosition = new Vector3(transform.position.x + collider.bounds.size.x/2.5, transform.position.y, transform.position.z);
 		//top left
 		if (Physics.Raycast(topLeftPosition, Vector3.up, topLeftRay)) {
-			if(topLeftRay.distance <= (movementVector.y + collider.bounds.size.y/2)) {
-				if(movementVector.y > moveThreshold) {
-					movementVector.y = movementVector.y/2;
-				}
-				else {
-					movementVector.y = topLeftRay.distance - collider.bounds.size.y/2;
-				}
-				if(isJumping) {
-					isJumping = false;
-					jumpUsed = true;
+			if(topLeftRay.collider.gameObject.name.ToLower() == "whippart") {
+			}
+			else {
+				if(topLeftRay.distance <= (movementVector.y + collider.bounds.size.y/2)) {
+					if(movementVector.y > moveThreshold) {
+						movementVector.y = movementVector.y/2;
+					}
+					else {
+						movementVector.y = topLeftRay.distance - collider.bounds.size.y/2;
+					}
+					if(isJumping) {
+						isJumping = false;
+						jumpUsed = true;
+					}
 				}
 			}
 		}
 		//top
 		//Debug.DrawRay(transform.position, Vector3.up*movementVector.y, Color.white);
 		if (Physics.Raycast(transform.position, Vector3.up, topRay)) {
-			if(topRay.distance <= (movementVector.y + collider.bounds.size.y/2)) {
-				if(movementVector.y > moveThreshold) {
-					movementVector.y = movementVector.y/2;
-				}
-				else {
-					movementVector.y = topRay.distance - collider.bounds.size.y/2;
-				}
-				if(isJumping) {
-					isJumping = false;
-					jumpUsed = true;
+			if(topRay.collider.gameObject.name.ToLower() == "whippart") {
+			}
+			else {
+				if(topRay.distance <= (movementVector.y + collider.bounds.size.y/2)) {
+					if(movementVector.y > moveThreshold) {
+						movementVector.y = movementVector.y/2;
+					}
+					else {
+						movementVector.y = topRay.distance - collider.bounds.size.y/2;
+					}
+					if(isJumping) {
+						isJumping = false;
+						jumpUsed = true;
+					}
 				}
 			}
 		}
 		//top right
 		if (Physics.Raycast(topRightPosition, Vector3.up, topRightRay)) {
-			if(topRightRay.distance <= (movementVector.y + collider.bounds.size.y/2)) {
-				if(movementVector.y > moveThreshold) {
-					movementVector.y = movementVector.y/2;
-				}
-				else {
-					movementVector.y = topRightRay.distance - collider.bounds.size.y/2;
-				}
-				if(isJumping) {
-					isJumping = false;
-					jumpUsed = true;
+			if(topRightRay.collider.gameObject.name.ToLower() == "whippart") {
+			}
+			else {
+				if(topRightRay.distance <= (movementVector.y + collider.bounds.size.y/2)) {
+					if(movementVector.y > moveThreshold) {
+						movementVector.y = movementVector.y/2;
+					}
+					else {
+						movementVector.y = topRightRay.distance - collider.bounds.size.y/2;
+					}
+					if(isJumping) {
+						isJumping = false;
+						jumpUsed = true;
+					}
 				}
 			}
 		}
 	}
 	//moving down
 	else {
-		bottomLeftPosition = new Vector3(transform.position.x - collider.bounds.size.x/2, transform.position.y, transform.position.z);
-		bottomRightPosition = new Vector3(transform.position.x + collider.bounds.size.x/2, transform.position.y, transform.position.z);
-		//left-down
-		if (Physics.Raycast(bottomLeftPosition, -Vector3.up, bottomLeftRay)) {
-			if(bottomLeftRay.distance <= -(movementVector.y - collider.bounds.size.y/2)) {
-				if(bottomLeftRay.transform.rotation.eulerAngles.z == 0) {
-					playerAnimatedImageGameObject.transform.position.y = transform.position.y + 1;
-				}
-				else if(movingRight && bottomLeftRay.transform.rotation.eulerAngles.z >= 180 && bottomLeftRay.transform.rotation.eulerAngles.z < 360) {
-					playerAnimatedImageGameObject.transform.position.y = transform.position.y - 2;
-				}
-				else if(movingLeft && bottomLeftRay.transform.rotation.eulerAngles.z > 0  && bottomLeftRay.transform.rotation.eulerAngles.z < 180) {
-				 	//playerAnimatedImageGameObject.transform.position.y = transform.position.y;
-				}
-				else {
-					playerAnimatedImageGameObject.transform.position.y = transform.position.y;
-				}
-				
-				playerAnimatedImageGameObject.transform.rotation = Quaternion.identity;
-				playerAnimatedImageGameObject.transform.Rotate(new Vector3(90, 0, 0), Space.World);
-				playerAnimatedImageGameObject.transform.Rotate(new Vector3(0, bottomLeftRay.transform.rotation.eulerAngles.z, 0), Space.Self);
-				if(-movementVector.y > moveThreshold) {
-					movementVector.y = movementVector.y/2;
-				}
-				else {
-					movementVector.y = -(bottomLeftRay.distance - collider.bounds.size.y/2);
-				}
-				if(jumpUsed || isJumping) {
-					resetJump();
-					if(movingRight || movingLeft) {
-						playerAnimatedImage.animateOver(19, 19, 28);
+		bottomLeftPosition = new Vector3(transform.position.x - collider.bounds.size.x/2.1, transform.position.y, transform.position.z);
+		bottomRightPosition = new Vector3(transform.position.x + collider.bounds.size.x/2.1, transform.position.y, transform.position.z);
+		
+		//down
+		//Debug.DrawRay(transform.position, -Vector3.up, Color.white);
+		if (Physics.Raycast(transform.position, -Vector3.up, bottomRay)) {
+			if(bottomRay.collider.gameObject.name.ToLower() == "whippart") {
+			}
+			else {
+				if(bottomRay.distance <= -(movementVector.y - collider.bounds.size.y/2)) {
+					if(-movementVector.y > moveThreshold) {
+						movementVector.y = movementVector.y/2;
 					}
 					else {
-						playerAnimatedImage.animateOver(0, 0, 4);
+						movementVector.y = -(bottomRay.distance - collider.bounds.size.y/2);
+					}
+					if(jumpUsed || isJumping) {
+						resetJump();
+						if(movingRight || movingLeft) {
+							playerAnimatedImage.animateOver(19, 19, 28);
+						}
+						else {
+							playerAnimatedImage.animateOver(0, 0, 4);
+						}
 					}
 				}
 			}
 		}
-		//down
-		//Debug.DrawRay(transform.position, -Vector3.up, Color.white);
-		if (Physics.Raycast(transform.position, -Vector3.up, bottomRay)) {
-			if(bottomRay.distance <= -(movementVector.y - collider.bounds.size.y/2)) {
-				if(bottomRay.transform.rotation.eulerAngles.z == 0) {
-					playerAnimatedImageGameObject.transform.position.y = transform.position.y + 1;
-				}
-				else if(movingRight && bottomRay.transform.rotation.eulerAngles.z >= 180 && bottomRay.transform.rotation.eulerAngles.z < 360) {
-					playerAnimatedImageGameObject.transform.position.y = transform.position.y - 2;
-				}
-				else if(movingLeft && bottomRay.transform.rotation.eulerAngles.z > 0  && bottomRay.transform.rotation.eulerAngles.z < 180) {
-				 	//playerAnimatedImageGameObject.transform.position.y = transform.position.y;
-				}
-				else {
-					playerAnimatedImageGameObject.transform.position.y = transform.position.y;
-				} 
-				playerAnimatedImageGameObject.transform.rotation = Quaternion.identity;
-				playerAnimatedImageGameObject.transform.Rotate(new Vector3(90, 0, 0), Space.World);
-				playerAnimatedImageGameObject.transform.Rotate(new Vector3(0, bottomRay.transform.rotation.eulerAngles.z, 0), Space.Self);
-				
-				if(-movementVector.y > moveThreshold) {
-					movementVector.y = movementVector.y/2;
-				}
-				else {
-					movementVector.y = -(bottomRay.distance - collider.bounds.size.y/2);
-				}
-				if(jumpUsed || isJumping) {
-					resetJump();
-					if(movingRight || movingLeft) {
-						playerAnimatedImage.animateOver(19, 19, 28);
+		else {
+		
+		}
+		//left-down
+		if (Physics.Raycast(bottomLeftPosition, -Vector3.up, bottomLeftRay)) {
+			if(bottomLeftRay.collider.gameObject.name.ToLower() == "whippart") {
+			}
+			else {
+				if(bottomLeftRay.distance <= -(movementVector.y - collider.bounds.size.y/2)) {		
+					if(-movementVector.y > moveThreshold) {
+						movementVector.y = movementVector.y/2;
 					}
 					else {
-						playerAnimatedImage.animateOver(0, 0, 4);
+						movementVector.y = -(bottomLeftRay.distance - collider.bounds.size.y/2);
+					}
+					if(jumpUsed || isJumping) {
+						resetJump();
+						if(movingRight || movingLeft) {
+							playerAnimatedImage.animateOver(19, 19, 28);
+						}
+						else {
+							playerAnimatedImage.animateOver(0, 0, 4);
+						}
+					}
+				}
+			}
+		}
+		//left-mid-down
+		var bottomMideLeftPosition = new Vector3(transform.position.x - collider.bounds.size.x/4, transform.position.y, transform.position.z);
+		if (Physics.Raycast(bottomMideLeftPosition, -Vector3.up, bottomLeftRay)) {
+			if(bottomLeftRay.collider.gameObject.name.ToLower() == "whippart") {
+			}
+			else {
+				if(bottomLeftRay.distance <= -(movementVector.y - collider.bounds.size.y/2)) {		
+					if(-movementVector.y > moveThreshold) {
+						movementVector.y = movementVector.y/2;
+					}
+					else {
+						movementVector.y = -(bottomLeftRay.distance - collider.bounds.size.y/2);
+					}
+					if(jumpUsed || isJumping) {
+						resetJump();
+						if(movingRight || movingLeft) {
+							playerAnimatedImage.animateOver(19, 19, 28);
+						}
+						else {
+							playerAnimatedImage.animateOver(0, 0, 4);
+						}
 					}
 				}
 			}
@@ -377,43 +432,93 @@ function fixCollisions(movementVector : Vector3) : Vector3 {
 		//right-down
 		//Debug.DrawRay(bottomRightPosition, -Vector3.up*5, Color.white);
 		if (Physics.Raycast(bottomRightPosition, -Vector3.up, bottomRightRay)) {
-			if(bottomRightRay.distance <= -(movementVector.y - collider.bounds.size.y/2)) {			
-				if(bottomRightRay.transform.rotation.eulerAngles.z == 0) {
-					playerAnimatedImageGameObject.transform.position.y = transform.position.y + 1;
-				}
-				else if(movingRight && bottomRightRay.transform.rotation.eulerAngles.z >= 180 && bottomRightRay.transform.rotation.eulerAngles.z < 360) {
-					playerAnimatedImageGameObject.transform.position.y = transform.position.y - 2;
-				}
-				else if(movingLeft && bottomRightRay.transform.rotation.eulerAngles.z > 0  && bottomRightRay.transform.rotation.eulerAngles.z < 180) {
-				 	//playerAnimatedImageGameObject.transform.position.y = transform.position.y;
-				}
-				else {
-					playerAnimatedImageGameObject.transform.position.y = transform.position.y;
-				} 
-				
-				playerAnimatedImageGameObject.transform.rotation = Quaternion.identity;
-				playerAnimatedImageGameObject.transform.Rotate(new Vector3(90, 0, 0), Space.World);
-				playerAnimatedImageGameObject.transform.Rotate(new Vector3(0, bottomRightRay.transform.rotation.eulerAngles.z, 0), Space.Self);
-				
-				if(-movementVector.y > moveThreshold) {
-					movementVector.y = movementVector.y/2;
-				}
-				else {
-					movementVector.y = -(bottomRightRay.distance - collider.bounds.size.y/2);
-				}
-				if(jumpUsed || isJumping) {
-					resetJump();
-					if(movingRight || movingLeft) {
-						playerAnimatedImage.animateOver(19, 19, 28);
+			if(bottomRightRay.collider.gameObject.name.ToLower() == "whippart") {
+			}
+			else {
+				if(bottomRightRay.distance <= -(movementVector.y - collider.bounds.size.y/2)) {				
+					if(-movementVector.y > moveThreshold) {
+						movementVector.y = movementVector.y/2;
 					}
 					else {
-						playerAnimatedImage.animateOver(0, 0, 4);
+						movementVector.y = -(bottomRightRay.distance - collider.bounds.size.y/2);
+					}
+					if(jumpUsed || isJumping) {
+						resetJump();
+						if(movingRight || movingLeft) {
+							playerAnimatedImage.animateOver(19, 19, 28);
+						}
+						else {
+							playerAnimatedImage.animateOver(0, 0, 4);
+						}
+					}
+				}
+			}
+		}
+		//right-mid-down
+		//Debug.DrawRay(bottomRightPosition, -Vector3.up*5, Color.white);
+		var bottomMidRightPosition = new Vector3(transform.position.x + collider.bounds.size.x/4, transform.position.y, transform.position.z);
+		if (Physics.Raycast(bottomMidRightPosition, -Vector3.up, bottomRightRay)) {
+			if(bottomRightRay.collider.gameObject.name.ToLower() == "whippart") {
+			}
+			else {
+				if(bottomRightRay.distance <= -(movementVector.y - collider.bounds.size.y/2)) {				
+					if(-movementVector.y > moveThreshold) {
+						movementVector.y = movementVector.y/2;
+					}
+					else {
+						movementVector.y = -(bottomRightRay.distance - collider.bounds.size.y/2);
+					}
+					if(jumpUsed || isJumping) {
+						resetJump();
+						if(movingRight || movingLeft) {
+							playerAnimatedImage.animateOver(19, 19, 28);
+						}
+						else {
+							playerAnimatedImage.animateOver(0, 0, 4);
+						}
 					}
 				}
 			}
 		}
 	}
+
+	//---------------------------------------------------------------------------------------------------------------
+	//IMPORTANT
+	//This handles the player rotation and helps make it so that the player is consistent on most platform orientations
 	
+	//middle-down
+	//var vectorOffset : Vector3 = Vector3.zero;
+	//vectorOffset.y -= collider.bounds.size.y/2;
+	if (Physics.Raycast(transform.position, -Vector3.up, bottomRay)) {
+		if(bottomRay.collider.gameObject.name.ToLower() == "whippart") {
+		}
+		else {
+			if(bottomRay.distance <= -(movementVector.y - collider.bounds.size.y)) {
+				transform.rotation = Quaternion.Euler(new Vector3(0, 0, bottomRay.transform.rotation.eulerAngles.z));
+			}
+			if(!isJumping) {
+				//fix player rotation
+				if(transform.rotation.eulerAngles.z >= 310 && transform.rotation.eulerAngles.z < 320) {
+					movementVector.y -= 2;
+				}
+				else if(transform.rotation.eulerAngles.z >= 320 && transform.rotation.eulerAngles.z < 330) {
+					movementVector.y -= 1.5;
+				}
+				else if(transform.rotation.eulerAngles.z >= 330 && transform.rotation.eulerAngles.z < 340) {
+					movementVector.y -= 1;
+				}
+				else if(transform.rotation.eulerAngles.z >= 340 && transform.rotation.eulerAngles.z < 350) {
+					movementVector.y -= .5;
+				}
+				else if(transform.rotation.eulerAngles.z >= 350 && transform.rotation.eulerAngles.z < 355) {
+					movementVector.y -= .5;
+				}
+			}
+		}
+	}
+
+	//END PLAYER ROTATION CODE
+	//---------------------------------------------------------------------------------------------------------------
 	return movementVector;
 }
 
@@ -459,6 +564,8 @@ function playerEventHandling() {
 			playerAnimatedImage.animateOver(0, 0, 4);
 		}
 	}	
+	//----------------------
+	
 	//------right-------
 	//right key pressed, left key not held
 	if(Input.GetKeyDown(rightKey) && !Input.GetKey(leftKey)) {
@@ -499,12 +606,36 @@ function playerEventHandling() {
 		if(isPlayerStanding()) { 
 			playerAnimatedImage.animateOver(0, 0, 4); 
 		}
-	}	
+	}
+	//----------------------
+	
+	//------ up key -------
+	//up key pressed
+	if(Input.GetKeyDown(upKey)) {
+		pressingUp = true;
+	}
+	//if up key released
+	if(Input.GetKeyUp(upKey)) {
+		pressingUp = false;
+	}
+	//----------------------
+	
+	//------ down key -------
+	//up key pressed
+	if(Input.GetKeyDown(downKey)) {
+		pressingDown = true;
+	}
+	//if up key released
+	if(Input.GetKeyUp(downKey)) {
+		pressingDown = false;
+	}
+	//----------------------
+	
 	//------jumping-------
 	if(Input.GetKeyDown(jumpKey)) {
 		// fixes rotation when on hills... and stuff
-		playerAnimatedImageGameObject.transform.rotation = Quaternion.identity;
-		playerAnimatedImageGameObject.transform.Rotate(new Vector3(90, 0, 0), Space.World);
+		transform.rotation = Quaternion.identity;
+		//playerAnimatedImageGameObject.transform.Rotate(new Vector3(90, 0, 0), Space.World);
 		//-----
 		if(!jumpUsed) {
 			isJumping = true;
@@ -519,7 +650,7 @@ function playerEventHandling() {
 			playerAnimatedImage.animateOnceAndStopAtEnd(39, 39, 41);
 		}
 	}
-	//------------------	
+	//----------------------
 }
 
 function runPlayerLogic() : Vector3 {
@@ -557,6 +688,17 @@ function runPlayerLogic() : Vector3 {
 		moveDirection.y -= fallSpeed;
 	}
 	return moveDirection;
+}
+
+function rotatePlayerOnCurrentSurface(movementVector : Vector3) {
+	var bottomRay : RaycastHit;
+	if (Physics.Raycast(transform.position, -Vector3.up, bottomRay)) {
+		if(bottomRay.distance <= -(movementVector.y - collider.bounds.size.y/2)) {
+			transform.rotation = Quaternion.identity;
+			transform.rotation = Quaternion.Euler(new Vector3(0, 0, bottomRay.transform.rotation.eulerAngles.z));
+		}
+	}
+
 }
 
 function resetJump() {

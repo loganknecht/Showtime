@@ -1,5 +1,5 @@
-var columnSize : int;
-var rowSize : int;
+var columnSize : int = 1;
+var rowSize : int = 1;
 
 var currentFrame : int;
 var startFrame : int;
@@ -20,11 +20,11 @@ var renderPlane : GameObject;
 
 function Start() {
 	//this is only here so that I can fix issues with the flipping on initialization because of camera annoyances
-	renderPlane.renderer.transform.localScale.x *= -1;
+	//renderPlane.renderer.transform.localScale.x *= -1;
 	//------
-	
 	configureSprite();
 	UpdateAnimation();
+	setFlipImage(flipImage);
 }
 
 function Update () {
